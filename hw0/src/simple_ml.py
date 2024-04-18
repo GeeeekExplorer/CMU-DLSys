@@ -20,7 +20,7 @@ def add(x, y):
         Sum of x + y
     """
     ### BEGIN YOUR CODE
-    pass
+    return x + y
     ### END YOUR CODE
 
 
@@ -48,11 +48,22 @@ def parse_mnist(image_filename, label_filename):
                 for MNIST will contain the values 0-9.
     """
     ### BEGIN YOUR CODE
-    pass
+    dtype_map = {8: np.uint8, 9: np.int8, 11: np.int16, 12: np.int32, 13: np.float32, 14: np.float64}
+
+    def read(file):
+        with gzip.GzipFile(file) as f:
+            _, _, dtype, ndim = struct.unpack("4b", f.read(4))
+            shape = struct.unpack(f">{ndim}i", f.read(4 * ndim))
+            return np.frombuffer(f.read(), dtype=dtype_map[dtype]).reshape(shape)
+
+    X = read(image_filename)
+    y = read(label_filename)
+    X = X.reshape(len(y), -1) / np.array(255., dtype=np.float32)
+    return X, y
     ### END YOUR CODE
 
 
-def softmax_loss(Z, y):
+def softmax_loss(Z: np.ndarray, y):
     """ Return softmax loss.  Note that for the purposes of this assignment,
     you don't need to worry about "nicely" scaling the numerical properties
     of the log-sum-exp computation, but can just compute this directly.
@@ -68,7 +79,7 @@ def softmax_loss(Z, y):
         Average softmax loss over the sample.
     """
     ### BEGIN YOUR CODE
-    pass
+    return np.mean(np.log(np.exp(Z).sum(-1)) - Z[range(len(y)), y])
     ### END YOUR CODE
 
 
@@ -91,7 +102,13 @@ def softmax_regression_epoch(X, y, theta, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    Y = np.eye(theta.shape[-1])
+    for i in range(0, len(y), batch):
+        _X, _y = X[i:i+batch], y[i:i+batch]
+        Z = _X @ theta
+        Z = np.exp(Z - Z.max(-1, keepdims=True))
+        Z /= Z.sum(-1, keepdims=True)
+        theta -= _X.T @ (Z - Y[_y]) * (lr / batch)
     ### END YOUR CODE
 
 
