@@ -48,14 +48,13 @@ def parse_mnist(image_filename, label_filename):
                 for MNIST will contain the values 0-9.
     """
     ### BEGIN YOUR CODE
-    dtype_map = {8: np.uint8, 9: np.int8, 11: np.int16, 12: np.int32, 13: np.float32, 14: np.float64}
-
     def read(file):
         with gzip.GzipFile(file) as f:
             _, _, dtype, ndim = struct.unpack("4b", f.read(4))
             shape = struct.unpack(f">{ndim}i", f.read(4 * ndim))
             return np.frombuffer(f.read(), dtype=dtype_map[dtype]).reshape(shape)
 
+    dtype_map = {8: np.uint8, 9: np.int8, 11: np.int16, 12: np.int32, 13: np.float32, 14: np.float64}
     X = read(image_filename)
     y = read(label_filename)
     X = X.reshape(len(y), -1) / np.array(255., dtype=np.float32)
@@ -79,6 +78,7 @@ def softmax_loss(Z: np.ndarray, y):
         Average softmax loss over the sample.
     """
     ### BEGIN YOUR CODE
+    Z -= Z.max(-1, keepdims=True)
     return np.mean(np.log(np.exp(Z).sum(-1)) - Z[range(len(y)), y])
     ### END YOUR CODE
 
@@ -135,7 +135,16 @@ def nn_epoch(X, y, W1, W2, lr = 0.1, batch=100):
         None
     """
     ### BEGIN YOUR CODE
-    pass
+    Y = np.eye(W2.shape[-1])
+    for i in range(0, len(y), batch):
+        _X, _y = X[i:i+batch], y[i:i+batch]
+        Z = np.maximum(_X @ W1, 0)
+        G2 = Z @ W2
+        G2 = np.exp(G2 - G2.max(-1, keepdims=True))
+        G2 = G2 / G2.sum(-1, keepdims=True) - Y[_y]
+        G1 = (Z > 0) * (G2 @ W2.T)
+        W1 -= _X.T @ G1 * (lr / batch)
+        W2 -= Z.T @ G2 * (lr / batch) 
     ### END YOUR CODE
 
 

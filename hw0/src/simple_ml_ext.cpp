@@ -33,7 +33,36 @@ void softmax_regression_epoch_cpp(const float *X, const unsigned char *y,
      */
 
     /// BEGIN YOUR CODE
-
+    lr /= batch;
+    float* Z = (float*)malloc(batch * k * sizeof(float));
+    for (size_t _ = 0; _ < m; _ += batch) {
+        for (size_t i = 0; i < batch; ++i) {
+            float max = __FLT_MIN__;
+            for (size_t j = 0; j < k; ++j) {
+                float acc = 0;
+                for (size_t l = 0; l < n; ++l)
+                    acc += X[i*n + l] * theta[l*k + j];
+                Z[i*k + j] = acc;
+                if (acc > max)
+                    max = acc;
+            }
+            float sum = 0;
+            for (size_t j = 0; j < k; ++j) {
+                Z[i*k + j] = expf(Z[i*k + j] - max);
+                sum += Z[i*k + j];
+            }
+            for (size_t j = 0; j < k; ++j)
+                Z[i*k + j] /= sum;
+            Z[i*k + y[i]] -= 1;
+        }
+        for (size_t l = 0; l < batch; ++l)
+            for (size_t i = 0; i < n; ++i)
+                for (size_t j = 0; j < k; ++j)
+                    theta[i*k + j] -= lr * X[l*n + i] * Z[l*k + j];
+        X += batch * n;
+        y += batch;
+    }
+    free(Z);
     /// END YOUR CODE
 }
 
