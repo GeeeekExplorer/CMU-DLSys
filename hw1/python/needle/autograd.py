@@ -343,8 +343,8 @@ class Tensor(Value):
     def matmul(self, other):
         return needle.ops.MatMul()(self, other)
 
-    def sum(self, axes=None):
-        return needle.ops.Summation(axes)(self)
+    def sum(self, axes=None, keepdims=False):
+        return needle.ops.Summation(axes, keepdims)(self)
 
     def broadcast_to(self, shape):
         return needle.ops.BroadcastTo(shape)(self)
