@@ -10,7 +10,7 @@ sys.path.append("python/")
 import needle as ndl
 
 
-def parse_mnist(image_filesname, label_filename):
+def parse_mnist(image_filename, label_filename):
     """Read an images and labels file in MNIST format.  See this page:
     http://yann.lecun.com/exdb/mnist/ for a description of the file format.
 
@@ -33,7 +33,17 @@ def parse_mnist(image_filesname, label_filename):
                 for MNIST will contain the values 0-9.
     """
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    def read(file):
+        with gzip.GzipFile(file) as f:
+            _, _, dtype, ndim = struct.unpack("4b", f.read(4))
+            shape = struct.unpack(f">{ndim}i", f.read(4 * ndim))
+            return np.frombuffer(f.read(), dtype=dtype_map[dtype]).reshape(shape)
+
+    dtype_map = {8: np.uint8, 9: np.int8, 11: np.int16, 12: np.int32, 13: np.float32, 14: np.float64}
+    X = read(image_filename)
+    y = read(label_filename)
+    X = X.reshape(len(y), -1) / np.float32(255.)
+    return X, y
     ### END YOUR SOLUTION
 
 
@@ -54,7 +64,7 @@ def softmax_loss(Z, y_one_hot):
         Average softmax loss over the sample. (ndl.Tensor[np.float32])
     """
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    return ((Z.exp().sum(-1).log()) - (Z * y_one_hot).sum(-1)).sum() / Z.shape[0]
     ### END YOUR SOLUTION
 
 
@@ -83,7 +93,15 @@ def nn_epoch(X, y, W1, W2, lr=0.1, batch=100):
     """
 
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    Y = np.eye(W2.shape[-1])
+    for i in range(0, len(y), batch):
+        _X = ndl.Tensor.make_const(X[i:i+batch])
+        _y = ndl.Tensor.make_const(Y[y[i:i+batch]])
+        loss = softmax_loss((_X @ W1).relu() @ W2, _y)
+        loss.backward()
+        W1 = ndl.Tensor(W1 - lr * W1.grad)
+        W2 = ndl.Tensor(W2 - lr * W2.grad)
+    return W1, W2
     ### END YOUR SOLUTION
 
 

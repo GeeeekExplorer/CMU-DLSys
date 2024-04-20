@@ -104,7 +104,7 @@ class EWisePow(TensorOp):
 
         a, b = node.inputs[0], node.inputs[1]
         grad_a = out_grad * b * (a ** (b - 1))
-        grad_b = out_grad * (a**b) * array_api.log(a.data)
+        grad_b = out_grad * (a**b) * log(a)
         return grad_a, grad_b
 
 def power(a, b):
@@ -216,7 +216,7 @@ def broadcast_to(a, shape):
 
 class Summation(TensorOp):
     def __init__(self, axes: Optional[tuple] = None, keepdims = False):
-        self.axes = axes
+        self.axes = None if axes is None else (axes,) if isinstance(axes, int) else axes
         self.keepdims = keepdims
 
     def compute(self, a: NDArray):
@@ -227,7 +227,7 @@ class Summation(TensorOp):
     def gradient(self, out_grad: Tensor, node: Tensor):
         ### BEGIN YOUR SOLUTION
         shape = list(node.inputs[0].shape)
-        for axis in self.axes:
+        for axis in self.axes or range(len(shape)):
             shape[axis] = 1
         return out_grad.reshape(shape).broadcast_to(node.inputs[0].shape)
         ### END YOUR SOLUTION
@@ -318,7 +318,7 @@ class ReLU(TensorOp):
 
     def gradient(self, out_grad: Tensor, node: Tensor):
         ### BEGIN YOUR SOLUTION
-        return out_grad * Tensor.make_const(out_grad.cached_data > 0)
+        return out_grad * Tensor.make_const(node.realize_cached_data() > 0)
         ### END YOUR SOLUTION
 
 

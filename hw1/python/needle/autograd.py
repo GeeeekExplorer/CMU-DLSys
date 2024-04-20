@@ -1,7 +1,7 @@
 """Core data structures."""
 import needle
 from .backend_numpy import Device, cpu, all_devices
-from typing import List, Optional, NamedTuple, Tuple, Union
+from typing import List, Set, Dict, Optional, NamedTuple, Tuple, Union
 from collections import namedtuple
 import numpy
 
@@ -357,6 +357,15 @@ class Tensor(Value):
 
     def transpose(self, axes=None):
         return needle.ops.Transpose(axes)(self)
+    
+    def exp(self):
+        return needle.ops.Exp()(self)
+    
+    def log(self):
+        return needle.ops.Log()(self)
+
+    def relu(self):
+        return needle.ops.ReLU()(self)
 
     __radd__ = __add__
     __rmul__ = __mul__
@@ -380,7 +389,14 @@ def compute_gradient_of_variables(output_tensor, out_grad):
     reverse_topo_order = list(reversed(find_topo_sort([output_tensor])))
 
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    for node in reverse_topo_order:
+        node.grad = sum_node_list(node_to_output_grads_list[node])
+        if node.op is None:
+            continue
+        for child, grad in zip(node.inputs, node.op.gradient_as_tuple(node.grad, node)):
+            if child not in node_to_output_grads_list:
+                node_to_output_grads_list[child] = []
+            node_to_output_grads_list[child].append(grad)
     ### END YOUR SOLUTION
 
 
@@ -393,14 +409,22 @@ def find_topo_sort(node_list: List[Value]) -> List[Value]:
     sort.
     """
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    visited = set()
+    topo_order = []
+    for node in node_list:
+        topo_sort_dfs(node, visited, topo_order)
+    return topo_order
     ### END YOUR SOLUTION
 
 
-def topo_sort_dfs(node, visited, topo_order):
+def topo_sort_dfs(node: Value, visited: Set[Value], topo_order: List[Value]):
     """Post-order DFS"""
     ### BEGIN YOUR SOLUTION
-    raise NotImplementedError()
+    if node not in visited:
+        visited.add(node)
+        for child in node.inputs:
+            topo_sort_dfs(child, visited, topo_order)
+        topo_order.append(node)
     ### END YOUR SOLUTION
 
 
