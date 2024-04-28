@@ -139,7 +139,7 @@ class NDArray:
         array."""
         array = NDArray.__new__(NDArray)
         array._shape = tuple(shape)
-        array._strides = NDArray.compact_strides(shape) if strides is None else strides
+        array._strides = NDArray.compact_strides(shape) if strides is None else tuple(strides)
         array._offset = offset
         array._device = device if device is not None else default_device()
         if handle is None:
@@ -247,7 +247,9 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        if prod(self._shape) != prod(new_shape) or not self.is_compact():
+            raise ValueError()
+        return NDArray.make(new_shape, device=self.device, handle=self._handle)
         ### END YOUR SOLUTION
 
     def permute(self, new_axes):
@@ -272,7 +274,9 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        shape = [self._shape[axis] for axis in new_axes]
+        strides = [self._strides[axis] for axis in new_axes]
+        return NDArray.make(shape, strides, self.device, self._handle, self._offset)
         ### END YOUR SOLUTION
 
     def broadcast_to(self, new_shape):
@@ -296,7 +300,10 @@ class NDArray:
         """
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        for a, b in zip(new_shape, self.shape):
+            assert a == b or b == 1
+        strides = [0 if b == 1 else a for a, b in zip(self.strides, self.shape)]
+        return NDArray.make(new_shape, strides, self.device, self._handle, self._offset)
         ### END YOUR SOLUTION
 
     ### Get and set elements
@@ -307,7 +314,7 @@ class NDArray:
         if start == None:
             start = 0
         if start < 0:
-            start = self.shape[dim]
+            start = self.shape[dim] + start
         if stop == None:
             stop = self.shape[dim]
         if stop < 0:
@@ -363,7 +370,12 @@ class NDArray:
         assert len(idxs) == self.ndim, "Need indexes equal to number of dimensions"
 
         ### BEGIN YOUR SOLUTION
-        raise NotImplementedError()
+        shape = [(s.stop - s.start - 1) // s.step + 1 for s in idxs]
+        strides = [s.step * t for s, t in zip(idxs, self.strides)]
+        offset = self._offset
+        for s, t in zip(idxs, self.strides):
+            offset += s.start * t
+        return NDArray.make(shape, strides, self.device, self._handle, offset)
         ### END YOUR SOLUTION
 
     def __setitem__(self, idxs, other):
