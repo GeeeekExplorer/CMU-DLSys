@@ -179,6 +179,18 @@ void ScalarAdd(const AlignedArray& a, scalar_t val, AlignedArray& out) {
  */
 
 
+void EwiseSub(const AlignedArray& a, const AlignedArray& b, AlignedArray& out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out[i] = a[i] - b[i];
+  }
+}
+
+void ScalarSub(const AlignedArray& a, scalar_t val, AlignedArray& out) {
+  for (size_t i = 0; i < a.size; i++) {
+    out[i] = a[i] - val;
+  }
+}
+
 void EwiseMul(const AlignedArray& a, const AlignedArray& b, AlignedArray& out) {
   for (size_t i = 0; i < a.size; i++) {
     out[i] = a[i] * b[i];
@@ -429,6 +441,8 @@ PYBIND11_MODULE(ndarray_backend_cpu, m) {
   m.def("ewise_add", EwiseAdd);
   m.def("scalar_add", ScalarAdd);
 
+  m.def("ewise_sub", EwiseSub);
+  m.def("scalar_sub", ScalarSub);
   m.def("ewise_mul", EwiseMul);
   m.def("scalar_mul", ScalarMul);
   m.def("ewise_div", EwiseDiv);

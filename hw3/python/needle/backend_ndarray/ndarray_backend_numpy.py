@@ -49,6 +49,14 @@ def scalar_add(a, val, out):
     out.array[:] = a.array + val
 
 
+def ewise_sub(a, b, out):
+    out.array[:] = a.array - b.array
+
+
+def scalar_sub(a, val, out):
+    out.array[:] = a.array - val
+
+
 def ewise_mul(a, b, out):
     out.array[:] = a.array * b.array
 

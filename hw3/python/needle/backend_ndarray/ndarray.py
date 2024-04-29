@@ -423,10 +423,12 @@ class NDArray:
     __radd__ = __add__
 
     def __sub__(self, other):
-        return self + (-other)
+        return self.ewise_or_scalar(
+            other, self.device.ewise_sub, self.device.scalar_sub
+        )
 
     def __rsub__(self, other):
-        return other + (-self)
+        return other - self
 
     def __mul__(self, other):
         return self.ewise_or_scalar(
